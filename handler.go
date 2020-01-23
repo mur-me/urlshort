@@ -1,7 +1,10 @@
 package urlshortener
 
 import (
+	"fmt"
 	"net/http"
+
+	"gopkg.in/yaml.v2"
 )
 
 // MapHandler will return an http.HandlerFunc (which also
@@ -11,8 +14,13 @@ import (
 // If the path is not provided in the map, then the fallback
 // http.Handler will be called instead.
 func MapHandler(pathsToUrls map[string]string, fallback http.Handler) http.HandlerFunc {
-	//	TODO: Implement this...
-	return nil
+	return func(rw http.ResponseWriter, r *http.Request) {
+		pathOnWebserver := r.URL.Path
+		if pathsToUrls[pathOnWebserver] != "" {
+			http.Redirect(rw, r, pathsToUrls[pathOnWebserver], http.StatusFound)
+		}
+		fallback.ServeHTTP(rw, r)
+	}
 }
 
 // YAMLHandler will parse the provided YAML and then return
@@ -32,6 +40,12 @@ func MapHandler(pathsToUrls map[string]string, fallback http.Handler) http.Handl
 // See MapHandler to create a similar http.HandlerFunc via
 // a mapping of paths to urls.
 func YAMLHandler(yml []byte, fallback http.Handler) (http.HandlerFunc, error) {
-	// TODO: Implement this...
-	return nil, nil
+	type YamlData []struct {
+		Path string `yaml:"path"`
+		URL  string `yaml:"url"`
+	}
+	yamlData := YamlData{}
+	err := yaml.Unmarshal(yml, &yamlData)
+	fmt.Printf("%v", yamlData)
+	return nil, err
 }
